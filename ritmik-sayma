@@ -1,0 +1,1451 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>3. Sınıf Ritmik Sayma Macerası - Akıllı Tahta Oyunu</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    * {
+      box-sizing: border-box;
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-touch-callout: none;
+    }
+    body {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      overflow-x: hidden;
+      background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+      color: #f8fafc;
+    }
+    .smartboard-btn {
+      transition: transform 0.12s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.12s ease;
+      touch-action: manipulation;
+    }
+    .smartboard-btn:active:not(:disabled) {
+      transform: scale(0.94);
+    }
+    @keyframes bounceSlow {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-6px); }
+    }
+    .animate-float {
+      animation: bounceSlow 2.4s infinite ease-in-out;
+    }
+    @keyframes shakeError {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-8px); }
+      50% { transform: translateX(8px); }
+      75% { transform: translateX(-6px); }
+    }
+    .shake {
+      animation: shakeError 0.38s ease-in-out;
+    }
+    @keyframes popCorrect {
+      0% { transform: scale(0.9); }
+      50% { transform: scale(1.08); }
+      100% { transform: scale(1); }
+    }
+    .pop-success {
+      animation: popCorrect 0.35s ease-out;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between">
+
+  <!-- ÜST ÖĞRETMEN VE KONTROL BARI -->
+  <header class="w-full bg-slate-900/90 border-b border-slate-700/80 px-3 py-2.5 shadow-lg z-20">
+    <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-2">
+      <!-- Başlık & Rozet -->
+      <div class="flex items-center gap-2.5">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shadow-md text-slate-950 font-black text-xl">
+          3
+        </div>
+        <div>
+          <h1 class="text-base sm:text-lg font-extrabold tracking-tight text-white leading-tight">
+            Ritmik Sayma Macerası
+          </h1>
+          <p class="text-xs text-slate-300 hidden sm:block">3. Sınıf Akıllı Tahta Etkileşimli Matematik Oyunu</p>
+        </div>
+      </div>
+
+      <!-- Oyun Modu Seçici Sekmeler -->
+      <nav class="flex items-center bg-slate-800 p-1 rounded-xl border border-slate-700 gap-1" aria-label="Oyun Modları">
+        <button id="modeRiverBtn" type="button" class="smartboard-btn px-3 py-1.5 rounded-lg text-xs sm:text-sm font-bold bg-emerald-500 text-slate-950 shadow">
+          🐸 Nehir Geçişi
+        </button>
+        <button id="modeBalloonBtn" type="button" class="smartboard-btn px-3 py-1.5 rounded-lg text-xs sm:text-sm font-bold text-slate-200 hover:bg-slate-700">
+          🎈 Balon Avcısı
+        </button>
+        <button id="modeDuelBtn" type="button" class="smartboard-btn px-3 py-1.5 rounded-lg text-xs sm:text-sm font-bold text-slate-200 hover:bg-slate-700">
+          🚂 İkili Düello
+        </button>
+      </nav>
+
+      <!-- Sağ Kontroller: Ayarlar, Ses, Sıfırla -->
+      <div class="flex items-center gap-2">
+        <button id="openSettingsBtn" type="button" class="smartboard-btn px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs sm:text-sm flex items-center gap-1.5 shadow">
+          <span>⚙️ Sayma Ayarları</span>
+        </button>
+        <button id="musicToggleBtn" type="button" class="smartboard-btn px-3 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold text-xs sm:text-sm shadow" title="Arka Plan Müziğini Aç/Kapat">
+          🎵 Müzik Açık
+        </button>
+        <button id="soundToggleBtn" type="button" class="smartboard-btn px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-600 text-slate-100 font-bold text-xs sm:text-sm" title="Ses Efektlerini Aç/Kapat">
+          🔊 Ses Açık
+        </button>
+        <button id="resetGameBtn" type="button" class="smartboard-btn px-3 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs sm:text-sm shadow">
+          🔄 Yeni Tur
+        </button>
+      </div>
+    </div>
+
+    <!-- Aktif Kazanım Bilgi Şeridi & Hızlı Sayı Seçici -->
+    <div class="max-w-7xl mx-auto mt-2 pt-2 border-t border-slate-800 flex flex-wrap items-center justify-between gap-2">
+      <div class="flex flex-wrap items-center gap-1.5">
+        <span class="text-xs font-bold text-slate-400 mr-1">Hızlı Seçim:</span>
+        <button type="button" data-step="6" class="step-chip smartboard-btn px-2.5 py-1 rounded-lg text-xs font-extrabold bg-amber-400 text-slate-950">6'şar</button>
+        <button type="button" data-step="7" class="step-chip smartboard-btn px-2.5 py-1 rounded-lg text-xs font-extrabold bg-slate-800 text-slate-200 border border-slate-700">7'şer</button>
+        <button type="button" data-step="8" class="step-chip smartboard-btn px-2.5 py-1 rounded-lg text-xs font-extrabold bg-slate-800 text-slate-200 border border-slate-700">8'er</button>
+        <button type="button" data-step="9" class="step-chip smartboard-btn px-2.5 py-1 rounded-lg text-xs font-extrabold bg-slate-800 text-slate-200 border border-slate-700">9'ar</button>
+        <button type="button" data-step="10" class="step-chip smartboard-btn px-2.5 py-1 rounded-lg text-xs font-extrabold bg-slate-800 text-slate-200 border border-slate-700">10'ar</button>
+        <button type="button" data-step="100" class="step-chip smartboard-btn px-2.5 py-1 rounded-lg text-xs font-extrabold bg-slate-800 text-slate-200 border border-slate-700">100'er</button>
+      </div>
+
+      <div class="flex items-center gap-3 text-xs sm:text-sm">
+        <span id="activeRuleBadge" class="px-2.5 py-1 rounded-lg bg-emerald-500/20 border border-emerald-400/40 text-emerald-300 font-bold">
+          Kural: 6'şar İleriye Ritmik Sayma
+        </span>
+        <span id="scoreBadge" class="px-3 py-1 rounded-lg bg-amber-500/20 border border-amber-400/40 text-amber-300 font-extrabold">
+          ⭐ Puan: 0 | Seri: 0
+        </span>
+      </div>
+    </div>
+  </header>
+
+  <!-- ANA OYUN ALANI -->
+  <main class="flex-1 w-full max-w-7xl mx-auto px-3 py-3 flex flex-col justify-between gap-3">
+
+    <!-- ========================================== -->
+    <!-- MOD 1 & MOD 2: TEK EKRAN CANVAS + ALT PANEL -->
+    <!-- ========================================== -->
+    <section id="singleBoardSection" class="flex-1 flex flex-col justify-between gap-3">
+      
+      <!-- Görsel Canvas Sahnesi (Üst %45) -->
+      <div id="canvasContainer" class="relative w-full h-56 sm:h-64 md:h-72 rounded-2xl overflow-hidden border-2 border-slate-700 shadow-2xl bg-slate-900">
+        <canvas id="gameCanvas" class="w-full h-full block cursor-pointer"></canvas>
+
+        <!-- İpucu ve Durum Baloncuğu (Canvas Üzeri) -->
+        <div id="feedbackBanner" class="absolute top-3 left-1/2 -translate-x-1/2 px-4 py-2 rounded-2xl bg-slate-900/90 border border-slate-600 shadow-xl text-center pointer-events-none transition-all duration-200">
+          <p id="feedbackText" class="text-sm sm:text-base font-extrabold text-amber-300">
+            Sıradaki sayıyı aşağıdaki büyük taşlardan seç!
+          </p>
+        </div>
+      </div>
+
+      <!-- Akıllı Tahta Alt Etkileşim Alanı (3. Sınıf Boy Hizası - Alt %55) -->
+      <div id="riverControlsArea" class="bg-slate-800/90 border-2 border-slate-700 rounded-2xl p-3 sm:p-4 shadow-xl flex flex-col gap-3">
+        
+        <!-- Sayı Örüntüsü Gösterge Şeridi -->
+        <div class="flex flex-wrap items-center justify-between gap-2 bg-slate-900/90 p-3 rounded-xl border border-slate-700">
+          <div id="sequenceDisplay" class="flex flex-wrap items-center gap-2 sm:gap-3 mx-auto">
+            <!-- JS ile doldurulur: ör. [6] -> [12] -> [18] -> [ ? ] -->
+          </div>
+          <button id="hintBtn" type="button" class="smartboard-btn px-3.5 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs sm:text-sm shadow flex items-center gap-1.5">
+            💡 İpucu Göster
+          </button>
+        </div>
+
+        <!-- İpucu Nokta / Parmak Destek Kutusu (Varsayılan Gizli) -->
+        <div id="hintVisualBox" class="hidden bg-indigo-950/90 border border-indigo-400/50 rounded-xl p-3 text-center">
+          <p id="hintVisualText" class="text-sm sm:text-base font-bold text-indigo-200"></p>
+          <div id="hintDotsContainer" class="flex flex-wrap justify-center gap-2 mt-2"></div>
+        </div>
+
+        <!-- Büyük Dokunmatik Cevap Butonları (Akıllı Tahta İçin Alt Bölgede Dev Butonlar) -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 pt-1" id="answerButtonsGrid">
+          <!-- JS ile 4 büyük buton oluşturulur -->
+        </div>
+      </div>
+
+      <!-- Balon Avcısı Modu Alt Hızlı Yakalama Paneli -->
+      <div id="balloonControlsArea" class="hidden bg-slate-800/90 border-2 border-slate-700 rounded-2xl p-3 sm:p-4 shadow-xl flex-col gap-3">
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <h2 id="balloonMissionTitle" class="text-base sm:text-lg font-black text-amber-300">
+              🎯 Görev: Sadece 6'nın Katı Olan Balonları Patlat!
+            </h2>
+            <p class="text-xs sm:text-sm text-slate-300">
+              Yukarıdaki balonlara doğrudan dokunabilir veya aşağıdaki dev balon butonlarına basabilirsin!
+            </p>
+          </div>
+          <div class="flex items-center gap-2">
+            <span id="balloonRemainingBadge" class="px-3 py-1.5 rounded-xl bg-emerald-500/20 border border-emerald-400/40 text-emerald-300 font-black text-sm">
+              Hedef: 0 / 5
+            </span>
+          </div>
+        </div>
+
+        <!-- Boyu Yetişmeyen Öğrenciler İçin Alt Hızlı Balon Butonları -->
+        <div id="balloonQuickGrid" class="grid grid-cols-3 sm:grid-cols-6 gap-2.5 pt-1">
+          <!-- JS ile aktif balonların alt buton karşılıkları -->
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ========================================== -->
+    <!-- MOD 3: İKİLİ DÜELLO (KAYIP VAGON YARIŞI)   -->
+    <!-- ========================================== -->
+    <section id="duelBoardSection" class="hidden flex-1 grid grid-cols-1 lg:grid-cols-2 gap-4">
+      
+      <!-- SOL OYUNCU: MAVİ TAKIM -->
+      <div class="bg-slate-800/95 border-2 border-sky-500/70 rounded-2xl p-4 flex flex-col justify-between shadow-xl">
+        <div class="flex items-center justify-between border-b border-slate-700 pb-2.5">
+          <div class="flex items-center gap-2">
+            <span class="w-4 h-4 rounded-full bg-sky-400 inline-block"></span>
+            <h2 class="text-lg font-black text-sky-300">MAVİ TAKIM TRENİ</h2>
+          </div>
+          <span id="duelScoreLeft" class="px-3 py-1 rounded-xl bg-sky-500/20 border border-sky-400/40 text-sky-200 font-black text-base">
+            Puan: 0
+          </span>
+        </div>
+
+        <!-- Tren Vagonları (Soru) -->
+        <div class="my-4 bg-slate-900/90 rounded-2xl p-4 border border-slate-700">
+          <p id="duelRuleLeft" class="text-xs font-bold text-sky-300 uppercase tracking-wider text-center mb-2">
+            6'şar İleriye Ritmik Sayma
+          </p>
+          <div id="duelTrainLeft" class="flex flex-wrap items-center justify-center gap-2">
+            <!-- JS ile vagonlar -->
+          </div>
+          <p id="duelFeedbackLeft" class="text-center text-sm font-bold text-slate-300 mt-3 h-5">
+            Eksik vagonu aşağıdan seç!
+          </p>
+        </div>
+
+        <!-- Alt Dokunmatik Seçenekler (Sol) -->
+        <div id="duelOptionsLeft" class="grid grid-cols-2 gap-3 mt-auto">
+          <!-- 4 Büyük Buton -->
+        </div>
+      </div>
+
+      <!-- SAĞ OYUNCU: KIRMIZI TAKIM -->
+      <div class="bg-slate-800/95 border-2 border-rose-500/70 rounded-2xl p-4 flex flex-col justify-between shadow-xl">
+        <div class="flex items-center justify-between border-b border-slate-700 pb-2.5">
+          <div class="flex items-center gap-2">
+            <span class="w-4 h-4 rounded-full bg-rose-400 inline-block"></span>
+            <h2 class="text-lg font-black text-rose-300">KIRMIZI TAKIM TRENİ</h2>
+          </div>
+          <span id="duelScoreRight" class="px-3 py-1 rounded-xl bg-rose-500/20 border border-rose-400/40 text-rose-200 font-black text-base">
+            Puan: 0
+          </span>
+        </div>
+
+        <!-- Tren Vagonları (Soru) -->
+        <div class="my-4 bg-slate-900/90 rounded-2xl p-4 border border-slate-700">
+          <p id="duelRuleRight" class="text-xs font-bold text-rose-300 uppercase tracking-wider text-center mb-2">
+            6'şar İleriye Ritmik Sayma
+          </p>
+          <div id="duelTrainRight" class="flex flex-wrap items-center justify-center gap-2">
+            <!-- JS ile vagonlar -->
+          </div>
+          <p id="duelFeedbackRight" class="text-center text-sm font-bold text-slate-300 mt-3 h-5">
+            Eksik vagonu aşağıdan seç!
+          </p>
+        </div>
+
+        <!-- Alt Dokunmatik Seçenekler (Sağ) -->
+        <div id="duelOptionsRight" class="grid grid-cols-2 gap-3 mt-auto">
+          <!-- 4 Büyük Buton -->
+        </div>
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- ÖĞRETMEN AYAR MODALI -->
+  <div id="settingsModal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-slate-900 border-2 border-slate-700 rounded-2xl max-w-lg w-full p-5 shadow-2xl">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3 mb-4">
+        <h3 class="text-lg font-black text-white">⚙️ Öğretmen Ritmik Sayma Ayarları</h3>
+        <button id="closeSettingsBtn" type="button" class="smartboard-btn px-3 py-1 rounded-lg bg-slate-800 text-slate-300 hover:text-white font-bold">
+          ✕ Kapat
+        </button>
+      </div>
+
+      <div class="space-y-4">
+        <!-- Sayma yönü -->
+        <div>
+          <label class="block text-xs font-bold uppercase text-slate-400 mb-2">Sayma Yönü</label>
+          <div class="grid grid-cols-2 gap-2">
+            <button id="dirForwardBtn" type="button" class="smartboard-btn py-2.5 px-3 rounded-xl font-bold text-sm bg-emerald-500 text-slate-950">
+              ➡️ İleriye Ritmik Sayma
+            </button>
+            <button id="dirBackwardBtn" type="button" class="smartboard-btn py-2.5 px-3 rounded-xl font-bold text-sm bg-slate-800 text-slate-200 border border-slate-700">
+              ⬅️ Geriye Ritmik Sayma
+            </button>
+          </div>
+        </div>
+
+        <!-- Başlangıç Noktası -->
+        <div>
+          <label class="block text-xs font-bold uppercase text-slate-400 mb-2">Başlangıç Seviyesi</label>
+          <div class="grid grid-cols-2 gap-2">
+            <button id="startStandardBtn" type="button" class="smartboard-btn py-2.5 px-3 rounded-xl font-bold text-sm bg-amber-400 text-slate-950">
+              🎯 Standart Katlar (6, 12, 18...)
+            </button>
+            <button id="startCustomBtn" type="button" class="smartboard-btn py-2.5 px-3 rounded-xl font-bold text-sm bg-slate-800 text-slate-200 border border-slate-700">
+              🚀 Farklı Sayıdan Başla (Ör. 14, 20, 26...)
+            </button>
+          </div>
+        </div>
+
+        <!-- Düello Hedef Puanı -->
+        <div>
+          <label for="targetScoreSelect" class="block text-xs font-bold uppercase text-slate-400 mb-2">Tur Başına Soru / Hedef Sayısı</label>
+          <select id="targetScoreSelect" class="w-full rounded-xl bg-slate-800 border border-slate-700 text-white px-3 py-2.5 font-bold text-sm">
+            <option value="5">5 Doğru Cevap (Hızlı Tur)</option>
+            <option value="8" selected>8 Doğru Cevap (Standart Ders Turu)</option>
+            <option value="10">10 Doğru Cevap (Uzun Maraton)</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="mt-6 flex justify-end">
+        <button id="applySettingsBtn" type="button" class="smartboard-btn w-full py-3 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-base shadow-lg">
+          ✅ Ayarları Uygula ve Oyunu Başlat
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TUR TAMAMLAMA / KUTLAMA MODALI -->
+  <div id="victoryModal" class="hidden fixed inset-0 bg-slate-950/85 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-slate-900 border-2 border-amber-400 rounded-3xl max-w-md w-full p-6 text-center shadow-2xl">
+      <div class="text-5xl mb-3 animate-float">🏆</div>
+      <h3 id="victoryTitle" class="text-2xl font-black text-amber-300 mb-2">Harika İş Çıkardın!</h3>
+      <p id="victorySubtitle" class="text-sm sm:text-base text-slate-200 mb-5">
+        Tüm ritmik sayma adımlarını başarıyla tamamladın!
+      </p>
+      <button id="playAgainBtn" type="button" class="smartboard-btn w-full py-3.5 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-lg shadow-xl">
+        🚀 Yeni Tura Başla
+      </button>
+    </div>
+  </div>
+
+  <script>
+    // ==========================================
+    // SES EFEKTLERİ MOTORU (Web Audio API)
+    // ==========================================
+    const SoundFX = {
+      ctx: null,
+      enabled: true,
+      init() {
+        if (!this.ctx) {
+          const AudioCtx = window.AudioContext || window.webkitAudioContext;
+          if (AudioCtx) {
+            this.ctx = new AudioCtx();
+          }
+        }
+        if (this.ctx && this.ctx.state === 'suspended') {
+          this.ctx.resume();
+        }
+      },
+      playTone(freq, type, duration, delay = 0, gainVal = 0.14) {
+        if (!this.enabled) return;
+        try {
+          this.init();
+          if (!this.ctx) return;
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.type = type;
+          osc.frequency.setValueAtTime(freq, this.ctx.currentTime + delay);
+          gain.gain.setValueAtTime(gainVal, this.ctx.currentTime + delay);
+          gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + delay + duration);
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+          osc.start(this.ctx.currentTime + delay);
+          osc.stop(this.ctx.currentTime + delay + duration);
+        } catch (e) {
+          // Audio blocked or unsupported
+        }
+      },
+      correct() {
+        this.playTone(523.25, 'sine', 0.14, 0, 0.16);
+        this.playTone(659.25, 'sine', 0.16, 0.1, 0.16);
+        this.playTone(783.99, 'triangle', 0.25, 0.2, 0.18);
+      },
+      wrong() {
+        this.playTone(240, 'sawtooth', 0.18, 0, 0.12);
+        this.playTone(190, 'sawtooth', 0.24, 0.15, 0.12);
+      },
+      pop() {
+        this.playTone(680, 'sine', 0.09, 0, 0.18);
+        this.playTone(920, 'triangle', 0.12, 0.06, 0.15);
+      },
+      fanfare() {
+        const notes = [523.25, 659.25, 783.99, 1046.5];
+        notes.forEach((n, idx) => this.playTone(n, 'triangle', 0.22, idx * 0.12, 0.18));
+      },
+      musicEnabled: true,
+      musicPlaying: false,
+      musicTimer: null,
+      musicStep: 0,
+      noiseBuffer: null,
+      // Heyecanlı Yarışma / Arcade Rekabet Müziği (32 adımlı yüksek enerjili La Minör / Mi Majör yürüyüşü)
+      melodyNotes: [
+        // 1. Ölçü (Am): Hızlı yükselen yarışma motifi
+        440.00, 0, 523.25, 587.33,  659.25, 0, 659.25, 783.99,
+        // 2. Ölçü (F): Gerilim ve hızlanma
+        698.46, 659.25, 587.33, 523.25,  659.25, 0, 523.25, 0,
+        // 3. Ölçü (G): Coşkulu tırmanış
+        392.00, 0, 493.88, 587.33,  783.99, 0, 783.99, 880.00,
+        // 4. Ölçü (E7): Heyecanlı final dönüşü
+        659.25, 622.25, 659.25, 783.99,  880.00, 659.25, 987.77, 880.00
+      ],
+      arpNotes: [
+        880.00, 659.25, 523.25, 659.25,  880.00, 659.25, 523.25, 659.25,
+        698.46, 523.25, 440.00, 523.25,  698.46, 523.25, 440.00, 523.25,
+        783.99, 587.33, 493.88, 587.33,  783.99, 587.33, 493.88, 587.33,
+        659.25, 493.88, 415.30, 493.88,  659.25, 783.99, 880.00, 987.77
+      ],
+      bassNotes: [
+        // Pompalayan oktav yarışma bası (Am - F - G - E)
+        110.00, 220.00, 110.00, 220.00,  110.00, 220.00, 110.00, 220.00,
+        87.31,  174.61, 87.31,  174.61,  87.31,  174.61, 87.31,  174.61,
+        98.00,  196.00, 98.00,  196.00,  98.00,  196.00, 98.00,  196.00,
+        82.41,  164.81, 82.41,  164.81,  82.41,  164.81, 98.00,  103.83
+      ],
+      ensureNoiseBuffer() {
+        if (this.noiseBuffer || !this.ctx) return;
+        const bufferSize = this.ctx.sampleRate * 0.15;
+        const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) {
+          data[i] = Math.random() * 2 - 1;
+        }
+        this.noiseBuffer = buffer;
+      },
+      playKick() {
+        if (!this.musicEnabled || !this.ctx) return;
+        try {
+          const now = this.ctx.currentTime;
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(145, now);
+          osc.frequency.exponentialRampToValueAtTime(42, now + 0.11);
+          gain.gain.setValueAtTime(0.16, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+          osc.start(now);
+          osc.stop(now + 0.12);
+        } catch (e) {}
+      },
+      playSnare() {
+        if (!this.musicEnabled || !this.ctx) return;
+        try {
+          this.ensureNoiseBuffer();
+          const now = this.ctx.currentTime;
+          const noise = this.ctx.createBufferSource();
+          noise.buffer = this.noiseBuffer;
+          const filter = this.ctx.createBiquadFilter();
+          filter.type = 'bandpass';
+          filter.frequency.setValueAtTime(1800, now);
+          const gain = this.ctx.createGain();
+          gain.gain.setValueAtTime(0.075, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.09);
+          noise.connect(filter);
+          filter.connect(gain);
+          gain.connect(this.ctx.destination);
+          noise.start(now);
+          noise.stop(now + 0.09);
+        } catch (e) {}
+      },
+      playHiHat(accent = false) {
+        if (!this.musicEnabled || !this.ctx) return;
+        try {
+          this.ensureNoiseBuffer();
+          const now = this.ctx.currentTime;
+          const noise = this.ctx.createBufferSource();
+          noise.buffer = this.noiseBuffer;
+          const filter = this.ctx.createBiquadFilter();
+          filter.type = 'highpass';
+          filter.frequency.setValueAtTime(6500, now);
+          const gain = this.ctx.createGain();
+          gain.gain.setValueAtTime(accent ? 0.038 : 0.018, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.035);
+          noise.connect(filter);
+          filter.connect(gain);
+          gain.connect(this.ctx.destination);
+          noise.start(now);
+          noise.stop(now + 0.04);
+        } catch (e) {}
+      },
+      playMusicNote(freq, type, duration, gainVal, filterFreq = 2400) {
+        if (!this.musicEnabled || !freq) return;
+        try {
+          this.init();
+          if (!this.ctx) return;
+          const now = this.ctx.currentTime;
+          const osc = this.ctx.createOscillator();
+          const filter = this.ctx.createBiquadFilter();
+          const gain = this.ctx.createGain();
+          osc.type = type;
+          osc.frequency.setValueAtTime(freq, now);
+          filter.type = 'lowpass';
+          filter.frequency.setValueAtTime(filterFreq, now);
+          gain.gain.setValueAtTime(0.001, now);
+          gain.gain.linearRampToValueAtTime(gainVal, now + 0.012);
+          gain.gain.exponentialRampToValueAtTime(0.0008, now + duration);
+          osc.connect(filter);
+          filter.connect(gain);
+          gain.connect(this.ctx.destination);
+          osc.start(now);
+          osc.stop(now + duration);
+        } catch (e) {}
+      },
+      playMusicTick() {
+        if (!this.musicEnabled) return;
+        const idx = this.musicStep % this.melodyNotes.length;
+        const beatStep = idx % 8;
+
+        // Ritim Grubu: Kick (0, 4), Snare/Clap (2, 6), Hi-Hat (her adımda, tek sayılarda vurgulu)
+        if (beatStep === 0 || beatStep === 4) {
+          this.playKick();
+        }
+        if (beatStep === 2 || beatStep === 6) {
+          this.playSnare();
+        }
+        this.playHiHat(beatStep % 2 === 1);
+
+        // Oktav Yarışma Bası
+        const bass = this.bassNotes[idx];
+        if (bass > 0) {
+          this.playMusicNote(bass, 'sawtooth', 0.12, 0.065, 720);
+        }
+
+        // Arka Plan Hızlı Arpej (Heyecan hissi)
+        const arp = this.arpNotes[idx];
+        if (arp > 0) {
+          this.playMusicNote(arp, 'triangle', 0.1, 0.035, 3200);
+        }
+
+        // Ana Rekabet Melodisi
+        const mel = this.melodyNotes[idx];
+        if (mel > 0) {
+          this.playMusicNote(mel, 'square', 0.16, 0.055, 2400);
+        }
+
+        this.musicStep = (this.musicStep + 1) % this.melodyNotes.length;
+      },
+      startMusic() {
+        if (!this.musicEnabled) return;
+        this.init();
+        if (this.musicTimer) return;
+        this.musicPlaying = true;
+        this.playMusicTick();
+        // 130ms 16'lık nota adımı (~115 BPM tempolu yarışma ritmi)
+        this.musicTimer = setInterval(() => {
+          this.playMusicTick();
+        }, 130);
+      },
+      stopMusic() {
+        this.musicPlaying = false;
+        if (this.musicTimer) {
+          clearInterval(this.musicTimer);
+          this.musicTimer = null;
+        }
+      },
+      toggleMusic() {
+        // Eğer müzik henüz başlamadıysa ilk tıklamada doğrudan başlat
+        if (!this.musicPlaying) {
+          this.musicEnabled = true;
+          this.startMusic();
+          return true;
+        }
+        this.musicEnabled = !this.musicEnabled;
+        if (this.musicEnabled) {
+          this.startMusic();
+        } else {
+          this.stopMusic();
+        }
+        return this.musicEnabled;
+      }
+    };
+
+    // ==========================================
+    // OYUN DURUMU (STATE)
+    // ==========================================
+    const state = {
+      mode: 'river', // 'river' | 'balloon' | 'duel'
+      step: 6, // 6, 7, 8, 9, 10, 100
+      direction: 'forward', // 'forward' | 'backward'
+      startMode: 'standard', // 'standard' | 'custom'
+      targetGoal: 8,
+      score: 0,
+      streak: 0,
+
+      // Nehir Geçişi Durumu
+      riverProgress: 0,
+      currentSequence: [],
+      missingIndex: 3,
+      correctAnswer: 24,
+      options: [],
+      frogJumpAnim: 0,
+      frogX: 0,
+      frogY: 0,
+      ripples: [],
+
+      // Balon Avcısı Durumu
+      balloons: [],
+      balloonHits: 0,
+      balloonGoal: 5,
+
+      // İkili Düello Durumu
+      duel: {
+        left: { score: 0, seq: [], missingIdx: 2, answer: 18, options: [], locked: false },
+        right: { score: 0, seq: [], missingIdx: 2, answer: 18, options: [], locked: false }
+      }
+    };
+
+    let animFrameId = null;
+
+    // ==========================================
+    // YARDIMCI MATEMATİK VE SORU ÜRETİCİ
+    // ==========================================
+    function getMaxLimit(step) {
+      if (step === 100) return 1000;
+      if (step === 10) return 200;
+      return 100; // 3. sınıf 6, 7, 8, 9'ar ritmik sayma 100 içinde
+    }
+
+    function generateSequenceQuestion() {
+      const step = state.step;
+      const isForward = state.direction === 'forward';
+      const seqLength = 4;
+
+      let startNum = step;
+      if (state.startMode === 'standard') {
+        const maxMult = step === 100 ? 6 : (step === 10 ? 12 : Math.floor((100 - step * seqLength) / step));
+        const safeMax = Math.max(1, maxMult);
+        const mult = Math.floor(Math.random() * safeMax) + 1;
+        startNum = mult * step;
+      } else {
+        // Rastgele sayıdan başlayarak (ör. 14'ten başlayıp 6'şar)
+        const baseMax = step === 100 ? 400 : (step === 10 ? 110 : 100 - step * seqLength - 2);
+        startNum = Math.floor(Math.random() * Math.max(5, baseMax)) + 4;
+      }
+
+      if (!isForward) {
+        startNum = startNum + step * (seqLength - 1);
+      }
+
+      const seq = [];
+      for (let i = 0; i < seqLength; i++) {
+        seq.push(isForward ? startNum + i * step : startNum - i * step);
+      }
+
+      // 3. veya 4. terimi sor (Nehir modunda son terim, düelloda 2 veya 3. indeks)
+      const missingIndex = state.mode === 'river' ? 3 : (Math.random() > 0.4 ? 3 : 2);
+      const answer = seq[missingIndex];
+
+      // Akıllı çeldiriciler (3. sınıf öğrencilerinin sık yaptığı +1/-1 veya yakın kat hataları)
+      const distractors = new Set();
+      const candidates = [
+        answer + 1,
+        answer - 1,
+        answer + 2,
+        answer - 2,
+        answer + step,
+        Math.max(1, answer - step),
+        answer + (step - 1),
+        Math.max(1, answer - (step - 1))
+      ];
+      for (const c of candidates) {
+        if (c > 0 && c !== answer && distractors.size < 3) {
+          distractors.add(c);
+        }
+      }
+      while (distractors.size < 3) {
+        const rand = answer + (Math.floor(Math.random() * 9) - 4);
+        if (rand > 0 && rand !== answer) distractors.add(rand);
+      }
+
+      const options = [answer, ...Array.from(distractors)];
+      // Karıştır
+      for (let i = options.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [options[i], options[j]] = [options[j], options[i]];
+      }
+
+      return { seq, missingIndex, answer, options };
+    }
+
+    // ==========================================
+    // ARAYÜZ GÜNCELLEME FONKSİYONLARI
+    // ==========================================
+    function updateHeaderBadges() {
+      const dirText = state.direction === 'forward' ? 'İleriye' : 'Geriye';
+      const suffixMap = { 6: "'şar", 7: "'şer", 8: "'er", 9: "'ar", 10: "'ar", 100: "'er" };
+      const suf = suffixMap[state.step] || "'ar";
+      document.getElementById('activeRuleBadge').textContent =
+        `Kural: ${state.step}${suf} ${dirText} Ritmik Sayma`;
+      document.getElementById('scoreBadge').textContent =
+        `⭐ Puan: ${state.score} | 🔥 Seri: ${state.streak}`;
+
+      document.querySelectorAll('.step-chip').forEach(btn => {
+        const s = Number(btn.getAttribute('data-step'));
+        if (s === state.step) {
+          btn.className = 'step-chip smartboard-btn px-2.5 py-1 rounded-lg text-xs font-extrabold bg-amber-400 text-slate-950 shadow';
+        } else {
+          btn.className = 'step-chip smartboard-btn px-2.5 py-1 rounded-lg text-xs font-extrabold bg-slate-800 text-slate-200 border border-slate-700';
+        }
+      });
+    }
+
+    function setFeedback(text, type = 'info') {
+      const banner = document.getElementById('feedbackBanner');
+      const label = document.getElementById('feedbackText');
+      label.textContent = text;
+      if (type === 'success') {
+        banner.className = 'absolute top-3 left-1/2 -translate-x-1/2 px-4 py-2 rounded-2xl bg-emerald-950/95 border-2 border-emerald-400 shadow-xl text-center pointer-events-none pop-success';
+        label.className = 'text-sm sm:text-base font-extrabold text-emerald-300';
+      } else if (type === 'error') {
+        banner.className = 'absolute top-3 left-1/2 -translate-x-1/2 px-4 py-2 rounded-2xl bg-rose-950/95 border-2 border-rose-400 shadow-xl text-center pointer-events-none shake';
+        label.className = 'text-sm sm:text-base font-extrabold text-rose-200';
+      } else {
+        banner.className = 'absolute top-3 left-1/2 -translate-x-1/2 px-4 py-2 rounded-2xl bg-slate-900/90 border border-slate-600 shadow-xl text-center pointer-events-none';
+        label.className = 'text-sm sm:text-base font-extrabold text-amber-300';
+      }
+    }
+
+    // ==========================================
+    // MOD 1: NEHİR GEÇİŞİ (KURBAĞA ZIPLAMA)
+    // ==========================================
+    function loadRiverQuestion() {
+      document.getElementById('hintVisualBox').classList.add('hidden');
+      const q = generateSequenceQuestion();
+      state.currentSequence = q.seq;
+      state.missingIndex = q.missingIndex;
+      state.correctAnswer = q.answer;
+      state.options = q.options;
+
+      renderRiverSequenceAndButtons();
+      setFeedback(`Kurbağayı zıplatmak için sıradaki sayıyı seç! (${state.riverProgress} / ${state.targetGoal})`, 'info');
+    }
+
+    function renderRiverSequenceAndButtons() {
+      const seqEl = document.getElementById('sequenceDisplay');
+      seqEl.innerHTML = '';
+
+      state.currentSequence.forEach((num, idx) => {
+        const box = document.createElement('div');
+        if (idx === state.missingIndex) {
+          box.id = 'missingNumberSlot';
+          box.className = 'px-4 py-2 sm:px-5 sm:py-2.5 rounded-2xl bg-amber-400/20 border-2 border-dashed border-amber-400 text-amber-300 font-black text-xl sm:text-2xl animate-pulse';
+          box.textContent = '?';
+        } else {
+          box.className = 'px-4 py-2 sm:px-5 sm:py-2.5 rounded-2xl bg-slate-800 border-2 border-slate-600 text-white font-black text-xl sm:text-2xl shadow';
+          box.textContent = String(num);
+        }
+        seqEl.appendChild(box);
+
+        if (idx < state.currentSequence.length - 1) {
+          const arrow = document.createElement('span');
+          arrow.className = 'text-slate-400 font-black text-lg sm:text-xl';
+          arrow.textContent = state.direction === 'forward' ? `+${state.step} ➔` : `-${state.step} ➔`;
+          seqEl.appendChild(arrow);
+        }
+      });
+
+      const grid = document.getElementById('answerButtonsGrid');
+      grid.innerHTML = '';
+      const colors = [
+        'from-emerald-500 to-teal-600 border-emerald-300',
+        'from-sky-500 to-blue-600 border-sky-300',
+        'from-violet-500 to-purple-600 border-violet-300',
+        'from-amber-500 to-orange-600 border-amber-300'
+      ];
+
+      state.options.forEach((opt, idx) => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = `smartboard-btn py-5 sm:py-6 rounded-2xl bg-gradient-to-b ${colors[idx % colors.length]} border-2 text-white font-black text-2xl sm:text-4xl shadow-xl flex items-center justify-center`;
+        btn.textContent = String(opt);
+        btn.addEventListener('click', () => handleRiverAnswer(opt, btn));
+        grid.appendChild(btn);
+      });
+    }
+
+    function handleRiverAnswer(selected, btnElement) {
+      if (selected === state.correctAnswer) {
+        SoundFX.correct();
+        state.score += 10;
+        state.streak += 1;
+        state.riverProgress += 1;
+        state.frogJumpAnim = 1.0;
+
+        const slot = document.getElementById('missingNumberSlot');
+        if (slot) {
+          slot.textContent = String(selected);
+          slot.className = 'px-4 py-2 sm:px-5 sm:py-2.5 rounded-2xl bg-emerald-500 text-slate-950 font-black text-xl sm:text-2xl pop-success';
+        }
+
+        updateHeaderBadges();
+        setFeedback(`Harika! ${selected} doğru cevap! 🐸`, 'success');
+
+        // Butonları kısa süre kilitle
+        Array.from(document.getElementById('answerButtonsGrid').children).forEach(b => {
+          b.disabled = true;
+        });
+
+        setTimeout(() => {
+          if (state.riverProgress >= state.targetGoal) {
+            showVictoryModal(
+              'Nehri Başarıyla Geçtin! 🐸🏆',
+              `${state.step}'ar ritmik saymada ${state.targetGoal} nilüfer yaprağının tamamını doğru geçtin!`
+            );
+          } else {
+            loadRiverQuestion();
+          }
+        }, 750);
+      } else {
+        SoundFX.wrong();
+        state.streak = 0;
+        updateHeaderBadges();
+        btnElement.classList.add('shake', 'opacity-50');
+        btnElement.disabled = true;
+        showHintVisual();
+        const prevNum = state.currentSequence[state.missingIndex - 1];
+        const opSymbol = state.direction === 'forward' ? '+' : '-';
+        setFeedback(
+          `Tekrar dene! İpucu: ${prevNum} ${opSymbol} ${state.step} kaç eder?`,
+          'error'
+        );
+      }
+    }
+
+    function showHintVisual() {
+      const box = document.getElementById('hintVisualBox');
+      const text = document.getElementById('hintVisualText');
+      const dots = document.getElementById('hintDotsContainer');
+      box.classList.remove('hidden');
+
+      const prevNum = state.currentSequence[state.missingIndex - 1];
+      const isForward = state.direction === 'forward';
+      text.textContent = isForward
+        ? `💡 İpucu: ${prevNum} sayısının üzerine ${state.step} adım ileriye sayalım:`
+        : `💡 İpucu: ${prevNum} sayısından ${state.step} adım geriye sayalım:`;
+
+      dots.innerHTML = '';
+      if (state.step <= 10) {
+        for (let i = 1; i <= state.step; i++) {
+          const stepVal = isForward ? prevNum + i : prevNum - i;
+          const badge = document.createElement('span');
+          const isLast = i === state.step;
+          badge.className = isLast
+            ? 'px-3 py-1 rounded-xl bg-amber-400 text-slate-950 font-black text-sm shadow'
+            : 'px-2.5 py-1 rounded-xl bg-indigo-800 text-indigo-100 font-bold text-xs';
+          badge.textContent = isLast ? `${stepVal} ⭐` : String(stepVal);
+          dots.appendChild(badge);
+        }
+      } else {
+        const badge = document.createElement('span');
+        badge.className = 'px-4 py-1.5 rounded-xl bg-amber-400 text-slate-950 font-black text-base';
+        badge.textContent = `${prevNum} ${isForward ? '+' : '-'} ${state.step} = ${state.correctAnswer}`;
+        dots.appendChild(badge);
+      }
+    }
+
+    // ==========================================
+    // MOD 2: BALON AVCISI (KATLARI YAKALA)
+    // ==========================================
+    function initBalloonRound() {
+      state.balloonHits = 0;
+      state.balloonGoal = 5;
+      state.balloons = [];
+
+      const suffixMap = { 6: "'nın", 7: "'nin", 8: "'in", 9: "'un", 10: "'un", 100: "'ün" };
+      const suf = suffixMap[state.step] || "'in";
+      document.getElementById('balloonMissionTitle').textContent =
+        `🎯 Görev: Sadece ${state.step}${suf} Katı Olan Balonları Patlat!`;
+      document.getElementById('balloonRemainingBadge').textContent =
+        `Hedef: 0 / ${state.balloonGoal}`;
+      setFeedback(`${state.step}${suf} katı olan balonlara dokun!`, 'info');
+
+      spawnBalloonWave();
+    }
+
+    function spawnBalloonWave() {
+      const step = state.step;
+      const palette = ['#f43f5e', '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899'];
+
+      // 3 doğru kat, 3 çeldirici üret
+      const correctNums = [];
+      const used = new Set();
+      while (correctNums.length < 3) {
+        const mult = Math.floor(Math.random() * 10) + 1;
+        const val = mult * step;
+        if (!used.has(val)) {
+          used.add(val);
+          correctNums.push({ num: val, isTarget: true });
+        }
+      }
+
+      const wrongNums = [];
+      while (wrongNums.length < 3) {
+        const mult = Math.floor(Math.random() * 10) + 1;
+        const offset = (Math.floor(Math.random() * 3) + 1) * (Math.random() > 0.5 ? 1 : -1);
+        const val = Math.max(2, mult * step + offset);
+        if (val % step !== 0 && !used.has(val)) {
+          used.add(val);
+          wrongNums.push({ num: val, isTarget: false });
+        }
+      }
+
+      const combined = [...correctNums, ...wrongNums];
+      for (let i = combined.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [combined[i], combined[j]] = [combined[j], combined[i]];
+      }
+
+      state.balloons = combined.map((item, idx) => ({
+        id: 'bal_' + idx + '_' + Date.now(),
+        num: item.num,
+        isTarget: item.isTarget,
+        popped: false,
+        wrongShake: 0,
+        colIndex: idx,
+        floatPhase: idx * 1.1,
+        color: palette[idx % palette.length]
+      }));
+
+      renderBalloonQuickButtons();
+    }
+
+    function renderBalloonQuickButtons() {
+      const grid = document.getElementById('balloonQuickGrid');
+      grid.innerHTML = '';
+      state.balloons.forEach(b => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.disabled = b.popped;
+        btn.className = b.popped
+          ? 'py-4 rounded-2xl bg-slate-900 border border-slate-800 text-slate-600 font-black text-xl line-through'
+          : 'smartboard-btn py-4 rounded-2xl bg-slate-700 hover:bg-slate-600 border-2 border-slate-500 text-white font-black text-2xl shadow-lg';
+        btn.textContent = b.popped ? '💥' : `🎈 ${b.num}`;
+        btn.addEventListener('click', () => handleBalloonTap(b.id));
+        grid.appendChild(btn);
+      });
+    }
+
+    function handleBalloonTap(balloonId) {
+      const b = state.balloons.find(item => item.id === balloonId);
+      if (!b || b.popped) return;
+
+      if (b.isTarget) {
+        b.popped = true;
+        SoundFX.pop();
+        state.score += 10;
+        state.streak += 1;
+        state.balloonHits += 1;
+        updateHeaderBadges();
+        document.getElementById('balloonRemainingBadge').textContent =
+          `Hedef: ${state.balloonHits} / ${state.balloonGoal}`;
+        setFeedback(`Süper! ${b.num}, ${state.step} sayısının katıdır! 💥`, 'success');
+        renderBalloonQuickButtons();
+
+        if (state.balloonHits >= state.balloonGoal) {
+          setTimeout(() => {
+            showVictoryModal(
+              'Usta Balon Avcısı! 🎈🏆',
+              `${state.step}'ar ritmik sayma katlarının hepsini doğru yakaladın!`
+            );
+          }, 500);
+        } else {
+          const remainingTargets = state.balloons.filter(x => x.isTarget && !x.popped);
+          if (remainingTargets.length === 0) {
+            setTimeout(spawnBalloonWave, 600);
+          }
+        }
+      } else {
+        b.wrongShake = 1.0;
+        SoundFX.wrong();
+        state.streak = 0;
+        updateHeaderBadges();
+        setFeedback(`Dikkat! ${b.num} sayısı ${state.step}'ar saymada yer almaz.`, 'error');
+      }
+    }
+
+    // ==========================================
+    // MOD 3: İKİLİ AKILLI TAHTA DÜELLOSU
+    // ==========================================
+    function initDuelGame() {
+      state.duel.left.score = 0;
+      state.duel.right.score = 0;
+      document.getElementById('duelScoreLeft').textContent = 'Puan: 0';
+      document.getElementById('duelScoreRight').textContent = 'Puan: 0';
+      loadDuelSideQuestion('left');
+      loadDuelSideQuestion('right');
+    }
+
+    function loadDuelSideQuestion(side) {
+      const q = generateSequenceQuestion();
+      const d = state.duel[side];
+      d.seq = q.seq;
+      d.missingIdx = q.missingIndex;
+      d.answer = q.answer;
+      d.options = q.options;
+      d.locked = false;
+
+      const isLeft = side === 'left';
+      const trainEl = document.getElementById(isLeft ? 'duelTrainLeft' : 'duelTrainRight');
+      const optEl = document.getElementById(isLeft ? 'duelOptionsLeft' : 'duelOptionsRight');
+      const ruleEl = document.getElementById(isLeft ? 'duelRuleLeft' : 'duelRuleRight');
+      const fbEl = document.getElementById(isLeft ? 'duelFeedbackLeft' : 'duelFeedbackRight');
+
+      const dirText = state.direction === 'forward' ? 'İleriye' : 'Geriye';
+      ruleEl.textContent = `${state.step}'ar ${dirText} Ritmik Sayma (${d.score} / ${state.targetGoal})`;
+      fbEl.textContent = 'Eksik vagonu aşağıdan seç!';
+      fbEl.className = 'text-center text-sm font-bold text-slate-300 mt-3 h-5';
+
+      trainEl.innerHTML = '';
+      d.seq.forEach((num, idx) => {
+        const wagon = document.createElement('div');
+        if (idx === d.missingIdx) {
+          wagon.className = 'px-4 py-3 rounded-xl bg-amber-400/20 border-2 border-dashed border-amber-400 text-amber-300 font-black text-2xl';
+          wagon.textContent = '?';
+        } else {
+          wagon.className = 'px-4 py-3 rounded-xl bg-slate-800 border-2 border-slate-600 text-white font-black text-2xl';
+          wagon.textContent = String(num);
+        }
+        trainEl.appendChild(wagon);
+      });
+
+      optEl.innerHTML = '';
+      d.options.forEach(opt => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = isLeft
+          ? 'smartboard-btn py-5 rounded-2xl bg-sky-600 hover:bg-sky-500 border-2 border-sky-300 text-white font-black text-3xl shadow-lg'
+          : 'smartboard-btn py-5 rounded-2xl bg-rose-600 hover:bg-rose-500 border-2 border-rose-300 text-white font-black text-3xl shadow-lg';
+        btn.textContent = String(opt);
+        btn.addEventListener('click', () => handleDuelAnswer(side, opt, btn));
+        optEl.appendChild(btn);
+      });
+    }
+
+    function handleDuelAnswer(side, selected, btn) {
+      const d = state.duel[side];
+      if (d.locked) return;
+
+      const isLeft = side === 'left';
+      const fbEl = document.getElementById(isLeft ? 'duelFeedbackLeft' : 'duelFeedbackRight');
+      const scoreEl = document.getElementById(isLeft ? 'duelScoreLeft' : 'duelScoreRight');
+
+      if (selected === d.answer) {
+        d.locked = true;
+        d.score += 1;
+        state.score += 10;
+        SoundFX.correct();
+        updateHeaderBadges();
+        scoreEl.textContent = `Puan: ${d.score}`;
+        fbEl.textContent = `Harika! ${selected} Doğru! 🎉`;
+        fbEl.className = 'text-center text-sm font-black text-emerald-400 mt-3 h-5';
+
+        if (d.score >= state.targetGoal) {
+          const winnerName = isLeft ? 'MAVİ TAKIM' : 'KIRMIZI TAKIM';
+          setTimeout(() => {
+            showVictoryModal(
+              `🏆 ${winnerName} KAZANDI!`,
+              `Tebrikler! ${winnerName} ${state.targetGoal} vagona doğru sayıları yerleştirerek yarışı birinci tamamladı!`
+            );
+          }, 400);
+        } else {
+          setTimeout(() => loadDuelSideQuestion(side), 550);
+        }
+      } else {
+        SoundFX.wrong();
+        btn.disabled = true;
+        btn.classList.add('opacity-40', 'shake');
+        fbEl.textContent = `Dikkat! ${state.step}'ar sayarak tekrar dene!`;
+        fbEl.className = 'text-center text-sm font-bold text-amber-300 mt-3 h-5';
+      }
+    }
+
+    // ==========================================
+    // CANVAS ÇİZİM MOTORU (NEHİR & BALON SAHNESİ)
+    // ==========================================
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+
+    function resizeCanvas() {
+      const container = document.getElementById('canvasContainer');
+      if (!container) return;
+      const rect = container.getBoundingClientRect();
+      if (rect.width > 0 && rect.height > 0) {
+        canvas.width = rect.width;
+        canvas.height = rect.height;
+      }
+    }
+
+    function drawRiverScene(time) {
+      const w = canvas.width;
+      const h = canvas.height;
+
+      // Nehir arka planı
+      const grad = ctx.createLinearGradient(0, 0, 0, h);
+      grad.addColorStop(0, '#0284c7');
+      grad.addColorStop(1, '#0369a1');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, w, h);
+
+      // Sol ve Sağ Kıyı Çimleri
+      ctx.fillStyle = '#15803d';
+      ctx.fillRect(0, 0, 56, h);
+      ctx.fillRect(w - 56, 0, 56, h);
+
+      // Su dalgası çizgileri
+      ctx.strokeStyle = 'rgba(255,255,255,0.18)';
+      ctx.lineWidth = 2;
+      for (let i = 0; i < 5; i++) {
+        const y = ((i + 1) * h) / 6;
+        const offset = Math.sin(time * 0.002 + i) * 12;
+        ctx.beginPath();
+        ctx.moveTo(75 + offset, y);
+        ctx.lineTo(w - 75 + offset, y);
+        ctx.stroke();
+      }
+
+      // Nilüfer yaprakları (4 adım)
+      const padCount = 4;
+      const usableW = w - 160;
+      const startX = 95;
+      const centerY = h * 0.62;
+
+      for (let i = 0; i < padCount; i++) {
+        const px = startX + (usableW / (padCount - 1)) * i;
+        const py = centerY + (i % 2 === 0 ? -12 : 12);
+
+        // Nilüfer gölgesi
+        ctx.fillStyle = 'rgba(0,0,0,0.22)';
+        ctx.beginPath();
+        ctx.ellipse(px, py + 5, 36, 22, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Nilüfer yaprağı
+        ctx.fillStyle = i === state.missingIndex ? '#fbbf24' : '#22c55e';
+        ctx.beginPath();
+        ctx.ellipse(px, py, 36, 22, 0, 0.2, Math.PI * 1.9);
+        ctx.lineTo(px, py);
+        ctx.closePath();
+        ctx.fill();
+
+        // Üzerindeki sayı
+        ctx.fillStyle = '#0f172a';
+        ctx.font = '900 18px Inter, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        const valText = i === state.missingIndex ? '?' : String(state.currentSequence[i] || '');
+        ctx.fillText(valText, px, py);
+
+        // Kurbağayı 3. yaprakta (soru yaprağından hemen önce) çiz
+        if (i === state.missingIndex - 1) {
+          let jumpOffset = 0;
+          if (state.frogJumpAnim > 0) {
+            jumpOffset = Math.sin(state.frogJumpAnim * Math.PI) * -35;
+            state.frogJumpAnim = Math.max(0, state.frogJumpAnim - 0.05);
+          }
+          drawCuteFrog(px, py - 24 + jumpOffset);
+        }
+      }
+    }
+
+    function drawCuteFrog(x, y) {
+      // Gövde
+      ctx.fillStyle = '#4ade80';
+      ctx.beginPath();
+      ctx.ellipse(x, y, 22, 17, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = '#14532d';
+      ctx.lineWidth = 2.5;
+      ctx.stroke();
+
+      // Gözler
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.arc(x - 10, y - 14, 7, 0, Math.PI * 2);
+      ctx.arc(x + 10, y - 14, 7, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = '#0f172a';
+      ctx.beginPath();
+      ctx.arc(x - 10, y - 14, 3.5, 0, Math.PI * 2);
+      ctx.arc(x + 10, y - 14, 3.5, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Gülümseme
+      ctx.strokeStyle = '#14532d';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(x, y - 2, 9, 0.15 * Math.PI, 0.85 * Math.PI);
+      ctx.stroke();
+    }
+
+    function drawBalloonScene(time) {
+      const w = canvas.width;
+      const h = canvas.height;
+
+      // Gökyüzü arka planı
+      const grad = ctx.createLinearGradient(0, 0, 0, h);
+      grad.addColorStop(0, '#1e1b4b');
+      grad.addColorStop(1, '#312e81');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, w, h);
+
+      const count = state.balloons.length || 6;
+      const spacing = w / (count + 1);
+
+      state.balloons.forEach((b, idx) => {
+        if (b.popped) return;
+        const baseX = spacing * (idx + 1);
+        const floatY = h * 0.54 + Math.sin(time * 0.003 + b.floatPhase) * 14;
+        let shakeX = 0;
+        if (b.wrongShake > 0) {
+          shakeX = Math.sin(b.wrongShake * 25) * 8;
+          b.wrongShake = Math.max(0, b.wrongShake - 0.05);
+        }
+
+        b.renderX = baseX + shakeX;
+        b.renderY = floatY;
+        b.radius = Math.min(36, Math.max(26, w / 22));
+
+        // Balon ipi
+        ctx.strokeStyle = 'rgba(255,255,255,0.45)';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(b.renderX, b.renderY + b.radius);
+        ctx.lineTo(b.renderX, b.renderY + b.radius + 26);
+        ctx.stroke();
+
+        // Balon gövdesi
+        ctx.fillStyle = b.color;
+        ctx.beginPath();
+        ctx.ellipse(b.renderX, b.renderY, b.radius, b.radius * 1.15, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 2.5;
+        ctx.stroke();
+
+        // Parlama
+        ctx.fillStyle = 'rgba(255,255,255,0.28)';
+        ctx.beginPath();
+        ctx.ellipse(b.renderX - b.radius * 0.32, b.renderY - b.radius * 0.35, b.radius * 0.2, b.radius * 0.32, -0.4, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Sayı
+        ctx.fillStyle = '#ffffff';
+        ctx.font = `900 ${Math.round(b.radius * 0.72)}px Inter, sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(String(b.num), b.renderX, b.renderY);
+      });
+    }
+
+    function gameLoop(time) {
+      if (state.mode === 'river') {
+        drawRiverScene(time);
+      } else if (state.mode === 'balloon') {
+        drawBalloonScene(time);
+      }
+      animFrameId = requestAnimationFrame(gameLoop);
+    }
+
+    // Canvas üzerine doğrudan dokunma (Balon Avcısı için)
+    canvas.addEventListener('pointerdown', (e) => {
+      if (state.mode !== 'balloon') return;
+      const rect = canvas.getBoundingClientRect();
+      const scaleX = canvas.width / rect.width;
+      const scaleY = canvas.height / rect.height;
+      const x = (e.clientX - rect.left) * scaleX;
+      const y = (e.clientY - rect.top) * scaleY;
+
+      for (const b of state.balloons) {
+        if (b.popped || !b.renderX) continue;
+        const dx = x - b.renderX;
+        const dy = y - b.renderY;
+        if (Math.sqrt(dx * dx + dy * dy) <= (b.radius || 34) * 1.25) {
+          handleBalloonTap(b.id);
+          break;
+        }
+      }
+    });
+
+    // ==========================================
+    // MOD DEĞİŞTİRME VE KONTROLLER
+    // ==========================================
+    function switchMode(newMode) {
+      state.mode = newMode;
+      const riverBtn = document.getElementById('modeRiverBtn');
+      const balloonBtn = document.getElementById('modeBalloonBtn');
+      const duelBtn = document.getElementById('modeDuelBtn');
+
+      const activeClass = 'smartboard-btn px-3 py-1.5 rounded-lg text-xs sm:text-sm font-bold bg-emerald-500 text-slate-950 shadow';
+      const inactiveClass = 'smartboard-btn px-3 py-1.5 rounded-lg text-xs sm:text-sm font-bold text-slate-200 hover:bg-slate-700';
+
+      riverBtn.className = newMode === 'river' ? activeClass : inactiveClass;
+      balloonBtn.className = newMode === 'balloon' ? activeClass : inactiveClass;
+      duelBtn.className = newMode === 'duel' ? activeClass : inactiveClass;
+
+      const singleSec = document.getElementById('singleBoardSection');
+      const duelSec = document.getElementById('duelBoardSection');
+      const riverCtrl = document.getElementById('riverControlsArea');
+      const balloonCtrl = document.getElementById('balloonControlsArea');
+
+      if (newMode === 'duel') {
+        singleSec.classList.add('hidden');
+        duelSec.classList.remove('hidden');
+        initDuelGame();
+      } else {
+        duelSec.classList.add('hidden');
+        singleSec.classList.remove('hidden');
+        resizeCanvas();
+        if (newMode === 'river') {
+          riverCtrl.classList.remove('hidden');
+          balloonCtrl.classList.add('hidden');
+          state.riverProgress = 0;
+          loadRiverQuestion();
+        } else {
+          riverCtrl.classList.add('hidden');
+          balloonCtrl.classList.remove('hidden');
+          balloonCtrl.classList.add('flex');
+          initBalloonRound();
+        }
+      }
+      updateHeaderBadges();
+    }
+
+    function showVictoryModal(title, subtitle) {
+      SoundFX.fanfare();
+      document.getElementById('victoryTitle').textContent = title;
+      document.getElementById('victorySubtitle').textContent = subtitle;
+      document.getElementById('victoryModal').classList.remove('hidden');
+    }
+
+    function resetCurrentMode() {
+      document.getElementById('victoryModal').classList.add('hidden');
+      state.riverProgress = 0;
+      switchMode(state.mode);
+    }
+
+    // ==========================================
+    // EVENT LISTENERS (ETKİLEŞİMLER)
+    // ==========================================
+    window.addEventListener('load', () => {
+      resizeCanvas();
+      updateHeaderBadges();
+      loadRiverQuestion();
+      if (animFrameId) cancelAnimationFrame(animFrameId);
+      animFrameId = requestAnimationFrame(gameLoop);
+    });
+
+    window.addEventListener('resize', () => {
+      resizeCanvas();
+    });
+
+    document.getElementById('modeRiverBtn').addEventListener('click', () => switchMode('river'));
+    document.getElementById('modeBalloonBtn').addEventListener('click', () => switchMode('balloon'));
+    document.getElementById('modeDuelBtn').addEventListener('click', () => switchMode('duel'));
+
+    document.querySelectorAll('.step-chip').forEach(btn => {
+      btn.addEventListener('click', () => {
+        state.step = Number(btn.getAttribute('data-step'));
+        resetCurrentMode();
+      });
+    });
+
+    document.getElementById('hintBtn').addEventListener('click', () => {
+      showHintVisual();
+    });
+
+    document.getElementById('musicToggleBtn').addEventListener('click', (e) => {
+      const isOn = SoundFX.toggleMusic();
+      e.currentTarget.textContent = isOn ? '🎵 Müzik Açık' : '🎵 Müzik Kapalı';
+      e.currentTarget.className = isOn
+        ? 'smartboard-btn px-3 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold text-xs sm:text-sm shadow'
+        : 'smartboard-btn px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-600 text-slate-300 font-bold text-xs sm:text-sm';
+    });
+
+    document.getElementById('soundToggleBtn').addEventListener('click', (e) => {
+      SoundFX.enabled = !SoundFX.enabled;
+      e.currentTarget.textContent = SoundFX.enabled ? '🔊 Ses Açık' : '🔇 Ses Kapalı';
+    });
+
+    // İlk dokunuşta veya tıklamada arka plan müziğini otomatik başlat (musicToggleBtn hariç çakışmayı önle)
+    function unlockAudioOnGesture(e) {
+      if (e && e.target && e.target.closest && e.target.closest('#musicToggleBtn')) {
+        return;
+      }
+      if (SoundFX.musicEnabled && !SoundFX.musicTimer) {
+        SoundFX.startMusic();
+      }
+    }
+    document.addEventListener('pointerdown', unlockAudioOnGesture);
+    document.addEventListener('keydown', unlockAudioOnGesture);
+
+    document.getElementById('resetGameBtn').addEventListener('click', () => {
+      resetCurrentMode();
+    });
+
+    document.getElementById('playAgainBtn').addEventListener('click', () => {
+      resetCurrentMode();
+    });
+
+    // Ayarlar Modalı Kontrolleri
+    document.getElementById('openSettingsBtn').addEventListener('click', () => {
+      document.getElementById('settingsModal').classList.remove('hidden');
+    });
+
+    document.getElementById('closeSettingsBtn').addEventListener('click', () => {
+      document.getElementById('settingsModal').classList.add('hidden');
+    });
+
+    document.getElementById('dirForwardBtn').addEventListener('click', () => {
+      state.direction = 'forward';
+      document.getElementById('dirForwardBtn').className = 'smartboard-btn py-2.5 px-3 rounded-xl font-bold text-sm bg-emerald-500 text-slate-950';
+      document.getElementById('dirBackwardBtn').className = 'smartboard-btn py-2.5 px-3 rounded-xl font-bold text-sm bg-slate-800 text-slate-200 border border-slate-700';
+    });
+
+    document.getElementById('dirBackwardBtn').addEventListener('click', () => {
+      state.direction = 'backward';
+      document.getElementById('dirBackwardBtn').className = 'smartboard-btn py-2.5 px-3 rounded-xl font-bold text-sm bg-emerald-500 text-slate-950';
+      document.getElementById('dirForwardBtn').className = 'smartboard-btn py-2.5 px-3 rounded-xl font-bold text-sm bg-slate-800 text-slate-200 border border-slate-700';
+    });
+
+    document.getElementById('startStandardBtn').addEventListener('click', () => {
+      state.startMode = 'standard';
+      document.getElementById('startStandardBtn').className = 'smartboard-btn py-2.5 px-3 rounded-xl font-bold text-sm bg-amber-400 text-slate-950';
+      document.getElementById('startCustomBtn').className = 'smartboard-btn py-2.5 px-3 rounded-xl font-bold text-sm bg-slate-800 text-slate-200 border border-slate-700';
+    });
+
+    document.getElementById('startCustomBtn').addEventListener('click', () => {
+      state.startMode = 'custom';
+      document.getElementById('startCustomBtn').className = 'smartboard-btn py-2.5 px-3 rounded-xl font-bold text-sm bg-amber-400 text-slate-950';
+      document.getElementById('startStandardBtn').className = 'smartboard-btn py-2.5 px-3 rounded-xl font-bold text-sm bg-slate-800 text-slate-200 border border-slate-700';
+    });
+
+    document.getElementById('applySettingsBtn').addEventListener('click', () => {
+      const sel = document.getElementById('targetScoreSelect');
+      state.targetGoal = Number(sel.value) || 8;
+      document.getElementById('settingsModal').classList.add('hidden');
+      resetCurrentMode();
+    });
+  </script>
+</body>
+</html>
